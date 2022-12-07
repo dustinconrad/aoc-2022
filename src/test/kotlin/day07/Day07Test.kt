@@ -8,37 +8,65 @@ class Day07Test {
     @Test
     fun testPart1() {
         val input = """
-                [D]    
-            [N] [C]    
-            [Z] [M] [P]
-             1   2   3 
-            
-            move 1 from 2 to 1
-            move 3 from 1 to 3
-            move 2 from 2 to 1
-            move 1 from 1 to 2
+            ${'$'} cd /
+            ${'$'} ls
+            dir a
+            14848514 b.txt
+            8504156 c.dat
+            dir d
+            ${'$'} cd a
+            ${'$'} ls
+            dir e
+            29116 f
+            2557 g
+            62596 h.lst
+            ${'$'} cd e
+            ${'$'} ls
+            584 i
+            ${'$'} cd ..
+            ${'$'} cd ..
+            ${'$'} cd d
+            ${'$'} ls
+            4060174 j
+            8033020 d.log
+            5626152 d.ext
+            7214296 k
         """.trimIndent()
             .lines()
 
-        assertEquals(1, part1(input))
+        assertEquals(95437, part1(input))
     }
 
     @Test
     fun testPart2() {
         val input = """
-                [D]    
-            [N] [C]    
-            [Z] [M] [P]
-             1   2   3 
-            
-            move 1 from 2 to 1
-            move 3 from 1 to 3
-            move 2 from 2 to 1
-            move 1 from 1 to 2
+            ${'$'} cd /
+            ${'$'} ls
+            dir a
+            14848514 b.txt
+            8504156 c.dat
+            dir d
+            ${'$'} cd a
+            ${'$'} ls
+            dir e
+            29116 f
+            2557 g
+            62596 h.lst
+            ${'$'} cd e
+            ${'$'} ls
+            584 i
+            ${'$'} cd ..
+            ${'$'} cd ..
+            ${'$'} cd d
+            ${'$'} ls
+            4060174 j
+            8033020 d.log
+            5626152 d.ext
+            7214296 k
         """.trimIndent()
             .lines()
 
-        assertEquals(1, part2(input))
+        assertEquals(24933642, part2(input))
     }
 
 }
