@@ -1,5 +1,6 @@
 package day08
 
+import plane.Coord
 import readResourceAsBufferedReader
 
 fun main() {
@@ -22,11 +23,10 @@ fun parseGrid(input: List<String>): Grid {
     return input.map { line -> line.toCharArray().toList().map { it.code - '0'.code } }
 }
 
-fun visible(grid: Grid): Set<Pair<Int, Int>> {
+fun visible(grid: Grid): Set<Coord> {
     val answer = mutableSetOf<Pair<Int,Int>>()
 
     for (y in grid.indices) {
-
         // left to right
         val row = grid[y]
         var tallestSoFar = -1

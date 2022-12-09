@@ -1,9 +1,10 @@
 package day09
 
+import plane.Coord
+import plane.distance
+import plane.plus
 import readResourceAsBufferedReader
-import kotlin.math.pow
 import kotlin.math.sign
-import kotlin.math.sqrt
 
 fun main() {
     println("part 1: ${part1(readResourceAsBufferedReader("9_1.txt").readLines())}")
@@ -26,16 +27,6 @@ fun part2(input: List<String>): Int {
     instructions.forEach { rp.move(it) }
 
     return rp.tailSeen.size
-}
-
-typealias Coord = Pair<Int, Int>
-
-fun Coord.distance(): Double {
-    return sqrt(first.toDouble().pow(2) + second.toDouble().pow(2))
-}
-
-operator fun Coord.plus(other: Coord): Coord {
-    return this.first + other.first to this.second + other.second
 }
 
 sealed class Dir(private val vector: Coord) {
