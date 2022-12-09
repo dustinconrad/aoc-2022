@@ -1,8 +1,9 @@
 package day09
 
 import readResourceAsBufferedReader
-import kotlin.math.absoluteValue
+import kotlin.math.pow
 import kotlin.math.sign
+import kotlin.math.sqrt
 
 fun main() {
     println("part 1: ${part1(readResourceAsBufferedReader("9_1.txt").readLines())}")
@@ -29,36 +30,36 @@ fun part2(input: List<String>): Int {
 
 typealias Coord = Pair<Int, Int>
 
-sealed class Dir(val magnitude: Int) {
+fun Coord.distance(): Double {
+    return sqrt(first.toDouble().pow(2) + second.toDouble().pow(2))
+}
 
-    abstract fun move(input: Coord): Coord
+operator fun Coord.plus(other: Coord): Coord {
+    return this.first + other.first to this.second + other.second
+}
+
+sealed class Dir(private val vector: Coord) {
+
+    fun move(input: Coord): Coord {
+        return input + vector
+    }
 
     abstract fun steps(): List<Dir>
 
-    class Right(magnitude: Int) : Dir(magnitude) {
-        override fun move(input: Coord): Coord {
-            return input.first to input.second + magnitude
-        }
-
+    class Right(private val magnitude: Int) : Dir(0 to magnitude) {
         override fun steps(): List<Dir> {
             return List(magnitude) { Right(1) }
         }
     }
 
-    class Left(magnitude: Int) : Dir(magnitude) {
-        override fun move(input: Coord): Coord {
-            return input.first to input.second - magnitude
-        }
+    class Left(private val magnitude: Int) : Dir(0 to -magnitude) {
 
         override fun steps(): List<Dir> {
             return List(magnitude) { Left(1) }
         }
     }
 
-    class Up(magnitude: Int) : Dir(magnitude) {
-        override fun move(input: Coord): Coord {
-            return input.first - magnitude to input.second
-        }
+    class Up(private val magnitude: Int) : Dir(-magnitude to 0) {
 
         override fun steps(): List<Dir> {
             return List(magnitude) { Up(1) }
@@ -66,11 +67,7 @@ sealed class Dir(val magnitude: Int) {
 
     }
 
-    class Down(magnitude: Int) : Dir(magnitude) {
-        override fun move(input: Coord): Coord {
-            return input.first + magnitude to input.second
-        }
-
+    class Down(private val magnitude: Int) : Dir(magnitude to 0) {
         override fun steps(): List<Dir> {
             return List(magnitude) { Down(1) }
         }
@@ -122,13 +119,13 @@ class RopeBridge(
     private fun follow(head: Coord, tail: Coord): Coord {
         val deltaY = head.first - tail.first
         val deltaX = head.second - tail.second
+        val dist = (deltaY to deltaX).distance()
+        val move = deltaY.sign to deltaX.sign
 
-        return when {
-            deltaY.absoluteValue == 1 && deltaX.absoluteValue == 1 -> tail
-            deltaY.absoluteValue >= 1 && deltaX.absoluteValue >= 1 -> tail.first + deltaY.sign to tail.second + deltaX.sign
-            deltaY.absoluteValue > 1 -> tail.first + deltaY.sign to tail.second
-            deltaX.absoluteValue > 1 -> tail.first to tail.second + deltaX.sign
-            else -> tail
+        return if (dist > 1.5) {
+            tail + move
+        } else {
+            tail
         }
     }
 

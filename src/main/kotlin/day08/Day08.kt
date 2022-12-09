@@ -18,11 +18,11 @@ fun part2(input: List<String>): Int {
     return scores.maxOfOrNull { it.max() } ?: throw IllegalStateException()
 }
 
-fun parseGrid(input: List<String>): List<List<Int>> {
+fun parseGrid(input: List<String>): Grid {
     return input.map { line -> line.toCharArray().toList().map { it.code - '0'.code } }
 }
 
-fun visible(grid: List<List<Int>>): Set<Pair<Int, Int>> {
+fun visible(grid: Grid): Set<Pair<Int, Int>> {
     val answer = mutableSetOf<Pair<Int,Int>>()
 
     for (y in grid.indices) {
@@ -69,7 +69,10 @@ fun visible(grid: List<List<Int>>): Set<Pair<Int, Int>> {
 
     return answer
 }
-fun scenicScore(grid: List<List<Int>>): Array<IntArray> {
+
+typealias Grid = List<List<Int>>
+
+fun scenicScore(grid: Grid): Array<IntArray> {
 
     fun right(y: Int, x: Int): Int {
         val curr = grid[y][x]
