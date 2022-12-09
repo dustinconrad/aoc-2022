@@ -12,3 +12,15 @@ fun Coord.distance(): Double {
 operator fun Coord.plus(other: Coord): Coord {
     return this.first + other.first to this.second + other.second
 }
+
+fun Coord.step(vector: Coord) = generateSequence(this) {
+    it + vector
+}
+
+fun Coord.right() = this.step(0 to 1)
+
+fun Coord.left() = this.step(0 to -1)
+
+fun Coord.down() = this.step(1 to 0)
+
+fun Coord.up() = this.step(-1 to 0)

@@ -1,6 +1,10 @@
 package day08
 
 import plane.Coord
+import plane.down
+import plane.left
+import plane.right
+import plane.up
 import readResourceAsBufferedReader
 
 fun main() {
@@ -72,58 +76,34 @@ fun visible(grid: Grid): Set<Coord> {
 
 typealias Grid = List<List<Int>>
 
+fun Grid.at(c: Coord): Int {
+    return this[c.first][c.second]
+}
+
 fun scenicScore(grid: Grid): Array<IntArray> {
 
     fun right(y: Int, x: Int): Int {
         val curr = grid[y][x]
-        var answer = 0
-        var i = x
-        while(i < grid[y].size - 1) {
-            answer++
-            if (grid[y][++i] >= curr) {
-                break
-            }
-        }
-        return answer
+        val lastTree = (y to x).right().drop(1).first { grid.at(it) >= curr || it.second >= grid[y].size - 1 }
+        return lastTree.second - x
     }
 
     fun left(y: Int, x: Int): Int {
         val curr = grid[y][x]
-        var answer = 0
-        var i = x
-        while(i > 0) {
-            answer++
-            if (grid[y][--i] >= curr) {
-                break
-            }
-        }
-        return answer
+        val lastTree = (y to x).left().drop(1).first { grid.at(it) >= curr || it.second <= 0 }
+        return x - lastTree.second
     }
 
     fun down(y: Int, x: Int): Int {
         val curr = grid[y][x]
-        var answer = 0
-        var i = y
-        while(i < grid.size - 1) {
-            answer++
-            if (grid[++i][x] >= curr) {
-                break
-            }
-        }
-        return answer
+        val lastTree = (y to x).down().drop(1).first { grid.at(it) >= curr || it.first >= grid.size - 1 }
+        return lastTree.first - y
     }
 
     fun up(y: Int, x: Int): Int {
         val curr = grid[y][x]
-        var answer = 0
-        var i = y
-        while(i > 0) {
-            answer++
-            if (grid[--i][x] >= curr) {
-                break
-            }
-        }
-        return answer
+        val lastTree = (y to x).up().drop(1).first { grid.at(it) >= curr || it.first <= 0 }
+        return y - lastTree.first
     }
 
     val scores = Array(grid.size) { IntArray(grid[0].size) }
