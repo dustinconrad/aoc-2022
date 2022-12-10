@@ -177,9 +177,6 @@ class Day10Test {
 
         val result = runResults(instructions)
 
-        val subResults = result.subList(179, 220)
-        println(result.subList(0, 21))
-
         assertEquals(21, result[19])
         assertEquals(19, result[59])
         assertEquals(18, result[99])
