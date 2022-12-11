@@ -74,19 +74,9 @@ class Day11Test {
                 "    If false: throw to monkey 1"
 
         val monkeys = input.lines().byEmptyLines().map { parseMonkey(it) }
-        val middle = MonkeyInTheMiddle(monkeys)
+        val middle = MonkeyInTheMiddle(monkeys, part2Worry(monkeys))
 
-        middle.round2()
-        assertEquals(listOf(2, 4, 3, 6), middle.state())
-        repeat(19) { middle.round2() }
-        assertEquals(listOf(99, 97, 8, 103), middle.state())
-        repeat(980) { middle.round2() }
-        assertEquals(listOf(5204, 4792, 199, 5192), middle.state())
-        repeat(1000) { middle.round2() } //2000
-        assertEquals(listOf(10419, 9577, 392, 10391), middle.state())
-        repeat(1000) { middle.round2() } //3000
-        assertEquals(listOf(15638 , 14358, 587, 15593), middle.state())
-        repeat(7000) { middle.round2() } // 10 000
+        repeat(10_000) { middle.round() } // 10 000
         assertEquals(listOf(52166, 47830, 1938, 52013), middle.state())
     }
 
