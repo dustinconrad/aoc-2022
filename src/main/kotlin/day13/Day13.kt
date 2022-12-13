@@ -5,7 +5,7 @@ import readResourceAsBufferedReader
 
 fun main() {
     println("part 1: ${part1(readResourceAsBufferedReader("13_1.txt").readLines())}")
-    //println("part 2: ${part2(readResourceAsBufferedReader("13_1.txt").readLines())}")
+    println("part 2: ${part2(readResourceAsBufferedReader("13_1.txt").readLines())}")
 }
 
 fun part1(input: List<String>): Int {
@@ -22,7 +22,22 @@ fun part1(input: List<String>): Int {
 }
 
 fun part2(input: List<String>): Int {
-    TODO()
+    val packets = input.byEmptyLines()
+        .flatMap { val (l,r) = it.split("\n")
+            listOf(parsePacket(l), parsePacket(r))
+        }.toMutableList()
+
+    val p1 = PacketList(listOf(PacketInt(2)))
+    val p2 = PacketList(listOf(PacketInt(6)))
+    packets.add(p1)
+    packets.add(p2)
+
+    packets.sort()
+
+    val i1 = packets.indexOf(p1)
+    val i2 = packets.indexOf(p2)
+
+    return (i1 + 1) * (i2 + 1)
 }
 
 sealed class PacketData: Comparable<PacketData> {
@@ -65,7 +80,7 @@ data class PacketInt(val data: Int): PacketData() {
             is PacketList -> PacketList(listOf(this)).compareTo(other)
             else -> throw IllegalArgumentException()
         }
-        println("$this ? $other -> $result")
+        //println("$this ? $other -> $result")
         return result
     }
 }
@@ -74,10 +89,23 @@ fun parsePacket(line: String): PacketList {
     val stack = ArrayDeque<PacketData>()
 
     val chars = StringBuilder()
+
+    fun processChars() {
+        if (chars.isNotEmpty()) {
+            val n = chars.toString().toInt()
+            chars.clear()
+            stack.add(PacketInt(n))
+        }
+    }
+
     line.forEach {
         when(it) {
-            '[' -> stack.add(PacketListStart)
+            '[' -> {
+                stack.add(PacketListStart)
+                processChars()
+            }
             ']' -> {
+                processChars()
                 val parts = mutableListOf<PacketData>()
                 while (stack.last() != PacketListStart) {
                     parts.add(stack.removeLast())
@@ -85,8 +113,10 @@ fun parsePacket(line: String): PacketList {
                 stack.removeLast()
                 stack.add(PacketList(parts.asReversed().toList()))
             }
-            ',' -> { /* do nothing */ }
-            else -> stack.add(PacketInt(it.code - '0'.code))
+            ',' -> processChars()
+            else -> {
+                chars.append(it)
+            }
         }
     }
 
@@ -97,8 +127,8 @@ data class PacketPair(val left: PacketList, val right: PacketList) {
 
     fun inOrder(): Boolean {
         val result = left <= right
-        println("$left <= $right: $result")
-        println()
+//        println("$left <= $right: $result")
+//        println()
         return result
     }
 
