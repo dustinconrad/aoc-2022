@@ -8,15 +8,33 @@ class Day13Test {
     @Test
     fun testPart1() {
         val input = """
-            Sabqponm
-            abcryxxl
-            accszExk
-            acctuvwj
-            abdefghi
+            [1,1,3,1,1]
+            [1,1,5,1,1]
+
+            [[1],[2,3,4]]
+            [[1],4]
+
+            [9]
+            [[8,7,6]]
+
+            [[4,4],4,4]
+            [[4,4],4,4,4]
+
+            [7,7,7,7]
+            [7,7,7]
+
+            []
+            [3]
+
+            [[[]]]
+            [[]]
+
+            [1,[2,[3,[4,[5,6,7]]]],8,9]
+            [1,[2,[3,[4,[5,6,0]]]],8,9]
         """.trimIndent()
             .lines()
 
-        assertEquals(31, part1(input))
+        assertEquals(13, part1(input))
     }
 
     @Test
