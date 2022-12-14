@@ -39,7 +39,7 @@ class Scan(paths: List<RockPath>) {
     private val topLeft: Coord
     private val bottomRight: Coord
 
-    private val grid: Array<Array<Fill>>
+    private val coords: MutableMap<Coord, Fill>
 
     init {
         val rocks = mutableSetOf<Coord>()
@@ -54,11 +54,7 @@ class Scan(paths: List<RockPath>) {
         topLeft = minY to minX
         bottomRight = maxY to maxX
 
-        grid = Array(maxY - minY + 1) { Array(maxX - minX + 1) { Fill.Air } }
-
-        rocks.forEach {
-            grid[it.y() - minY][it.x() - minX] = Fill.Rock
-        }
+        coords = rocks.associateWith { Fill.Rock }.toMutableMap()
     }
 
     fun start(): Int {
@@ -66,12 +62,12 @@ class Scan(paths: List<RockPath>) {
 //            println(this)
 //            println()
         }
-        return grid.sumOf{ line -> line.count { it == Fill.Sand } }
+        return coords.count { it.value == Fill.Sand }
     }
 
-    private fun at(c: Coord) = grid[c.y() - topLeft.y()][c.x() - topLeft.x()]
-
-    private fun relative(c: Coord): Coord = c.y() - topLeft.y() to c.x() - topLeft.x()
+    private fun at(c: Coord): Fill {
+        return coords.getOrDefault(c, Fill.Air)
+    }
 
     private fun simulateSand(sandSrc: Coord): Boolean {
         val lastAir = sandSrc.down().takeWhile { it.y() <= bottomRight.y() && at(it) == Fill.Air }.lastOrNull()
@@ -95,14 +91,14 @@ class Scan(paths: List<RockPath>) {
         }
 
         // settled
-        val relative = relative(lastAir)
-        grid[relative.y()][relative.x()] = Fill.Sand
+        coords[lastAir] = Fill.Sand
         return true
     }
 
-
     override fun toString(): String {
-        return grid.joinToString("\n") { it.joinToString("") }
+        return (topLeft.y()..bottomRight.y()).joinToString("\n") { y ->
+            (topLeft.x()..bottomRight.x()).joinToString("") { at(y to it).toString() }
+        }
     }
 
 
