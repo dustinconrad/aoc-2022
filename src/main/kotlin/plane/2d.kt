@@ -28,3 +28,16 @@ fun Coord.down() = this.step(1 to 0)
 
 fun Coord.up() = this.step(-1 to 0)
 
+fun Coord.pathTo(end: Coord): Set<Coord> {
+    return if (this.y() == end.y()) {
+        val y = this.y()
+        (minOf(this.x(), end.x())..maxOf(this.x(), end.x()))
+            .map { y to it }
+            .toSet()
+    } else {
+        val x = this.x()
+        (minOf(this.y(), end.y())..maxOf(this.y(), end.y()))
+            .map { it to x }
+            .toSet()
+    }
+}

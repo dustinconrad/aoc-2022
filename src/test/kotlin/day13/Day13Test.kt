@@ -34,11 +34,6 @@ class Day13Test {
         """.trimIndent()
             .lines()
 
-        """
-            [[10],[],[6,[],[]],[],[2,0,5]]
-            [[6,1,[8,6,9]]]
-        """.trimIndent()
-
         assertEquals(13, part1(input))
     }
 
