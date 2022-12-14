@@ -63,8 +63,8 @@ class Scan(paths: List<RockPath>) {
 
     fun start(): Int {
         while(simulateSand(0 to 500)) {
-            println(this)
-            println()
+//            println(this)
+//            println()
         }
         return grid.sumOf{ line -> line.count { it == Fill.Sand } }
     }
@@ -79,11 +79,18 @@ class Scan(paths: List<RockPath>) {
             return false
         }
         // try down and left
-        if (lastAir.x() > topLeft.x() && at(lastAir + (1 to -1)) == Fill.Air) {
-            return simulateSand(lastAir + (1 to -1))
+        val dl = lastAir + (1 to -1)
+        if (dl.x() < topLeft.x()) {
+            return false
+        } else if (at(dl) == Fill.Air) {
+            return simulateSand(dl)
         }
+
         // try down and right
-        if (lastAir.x() < bottomRight.x() && at(lastAir + (1 to 1)) == Fill.Air) {
+        val dr = lastAir + (1 to 1)
+        if (dr.x() > bottomRight.x()) {
+            return false
+        } else if (at(dr) == Fill.Air) {
             return simulateSand(lastAir + (1 to 1))
         }
 
