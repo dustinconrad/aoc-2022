@@ -1,7 +1,6 @@
 package day14
 
 import plane.Coord
-import plane.down
 import plane.pathTo
 import plane.plus
 import plane.x
@@ -83,57 +82,34 @@ class Scan(paths: List<RockPath>) {
     private fun at2(c: Coord): Fill {
         return when {
             coords.containsKey(c) -> coords[c]!!
-            c.y() == bottomRight.y() + 1 -> Fill.Rock
+            c.y() == bottomRight.y() + 2 -> Fill.Rock
             else -> Fill.Air
         }
     }
 
-    private tailrec fun sandStep(sandSrc: Coord, done: Predicate<Coord>): Boolean {
+    private tailrec fun sandStep(sandSrc: Coord, lookup: (Coord) -> Fill, done: Predicate<Coord>): Boolean {
         if (done.test(sandSrc)) {
             return false
         }
         val next = listOf(1 to 0, 1 to -1, 1 to 1)
             .map { sandSrc + it }
-            .firstOrNull { at(it) == Fill.Air }
+            .firstOrNull { lookup(it) == Fill.Air }
 
         return if (next == null) {
-            (at(sandSrc) == Fill.Air).also { coords[sandSrc] = Fill.Sand }
+            (lookup(sandSrc) == Fill.Air).also { coords[sandSrc] = Fill.Sand }
         } else {
-            sandStep(next, done)
+            sandStep(next, lookup, done)
         }
     }
 
     private fun simulateSand(sandSrc: Coord): Boolean {
-        return sandStep(sandSrc) {
+        return sandStep(sandSrc, this::at) {
             !(topLeft.x()..bottomRight.x()).contains(it.x())
         }
     }
 
     private fun simulateSand2(sandSrc: Coord): Boolean {
-        val lastAir = sandSrc.down().takeWhile { at2(it) == Fill.Air }.lastOrNull()
-        if (lastAir == null) {
-            return if (at2(sandSrc) != Fill.Sand) {
-                coords[sandSrc] = Fill.Sand
-                return true
-            } else {
-                false
-            }
-        }
-        // try down and left
-        val dl = lastAir + (1 to -1)
-        if (at(dl) == Fill.Air) {
-            return simulateSand2(dl)
-        }
-
-        // try down and right
-        val dr = lastAir + (1 to 1)
-        if (at(dr) == Fill.Air) {
-            return simulateSand2(lastAir + (1 to 1))
-        }
-
-        // settled
-        coords[lastAir] = Fill.Sand
-        return true
+        return sandStep(sandSrc, this::at2) { false }
     }
 
     override fun toString(): String {
@@ -144,7 +120,7 @@ class Scan(paths: List<RockPath>) {
         val maxY = coords.keys.maxBy { it.y() }.y()
 
         return (minY..maxY).joinToString("\n") { y ->
-            (minX..maxX).joinToString("") { at(y to it).toString() }
+            (minX..maxX).joinToString("") { at2(y to it).toString() }
         }
     }
 
