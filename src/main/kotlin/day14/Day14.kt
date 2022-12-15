@@ -7,6 +7,7 @@ import plane.plus
 import plane.x
 import plane.y
 import readResourceAsBufferedReader
+import java.util.function.Predicate
 
 fun main() {
     println("part 1: ${part1(readResourceAsBufferedReader("14_1.txt").readLines())}")
@@ -87,30 +88,25 @@ class Scan(paths: List<RockPath>) {
         }
     }
 
+    private tailrec fun sandStep(sandSrc: Coord, done: Predicate<Coord>): Boolean {
+        if (done.test(sandSrc)) {
+            return false
+        }
+        val next = listOf(1 to 0, 1 to -1, 1 to 1)
+            .map { sandSrc + it }
+            .firstOrNull { at(it) == Fill.Air }
+
+        return if (next == null) {
+            (at(sandSrc) == Fill.Air).also { coords[sandSrc] = Fill.Sand }
+        } else {
+            sandStep(next, done)
+        }
+    }
+
     private fun simulateSand(sandSrc: Coord): Boolean {
-        val lastAir = sandSrc.down().takeWhile { it.y() <= bottomRight.y() && at(it) == Fill.Air }.lastOrNull()
-        if (lastAir == null || lastAir.y() >= bottomRight.y()) {
-            return false
+        return sandStep(sandSrc) {
+            !(topLeft.x()..bottomRight.x()).contains(it.x())
         }
-        // try down and left
-        val dl = lastAir + (1 to -1)
-        if (dl.x() < topLeft.x()) {
-            return false
-        } else if (at(dl) == Fill.Air) {
-            return simulateSand(dl)
-        }
-
-        // try down and right
-        val dr = lastAir + (1 to 1)
-        if (dr.x() > bottomRight.x()) {
-            return false
-        } else if (at(dr) == Fill.Air) {
-            return simulateSand(lastAir + (1 to 1))
-        }
-
-        // settled
-        coords[lastAir] = Fill.Sand
-        return true
     }
 
     private fun simulateSand2(sandSrc: Coord): Boolean {
