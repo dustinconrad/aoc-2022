@@ -16,8 +16,3 @@ fun IntRange.combine(other: IntRange): IntRange {
     require(this.overlaps(other)) { "$this must overlap $other" }
     return kotlin.math.min(this.first, other.first).rangeTo(max(this.last, other.last))
 }
-
-fun IntRange.split(on: Int): Pair<IntRange, IntRange> {
-    require(this.contains(on)) { "$this must contain $on" }
-    return this.first until on to (on + 1 .. this.last)
-}
