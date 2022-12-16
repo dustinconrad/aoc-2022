@@ -9,10 +9,17 @@ import geometry.x
 import geometry.y
 import readResourceAsBufferedReader
 import kotlin.math.absoluteValue
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
+@OptIn(ExperimentalTime::class)
 fun main() {
     println("part 1: ${part1(readResourceAsBufferedReader("15_1.txt").readLines())}")
-    println("part 2: ${part2(readResourceAsBufferedReader("15_1.txt").readLines())}")
+    var result: Long
+    val time = measureTime {
+        result = part2(readResourceAsBufferedReader("15_1.txt").readLines());
+    }
+    println("part 2(${time}): $result")
 }
 
 fun part1(input: List<String>, y: Int = 2000000): Int {
