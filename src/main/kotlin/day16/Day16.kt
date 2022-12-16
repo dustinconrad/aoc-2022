@@ -41,7 +41,7 @@ fun part2(input: List<String>, tl: Coord = 0 to 0, br: Coord = 4000000 to 400000
 class Tunnels(nodes: Collection<Node>) {
 
     private val graph = mutableMapOf<String, Node>()
-    private val visited = LinkedHashMap<String, Int>()
+    private val opened = LinkedHashMap<String, Int>()
     private val cache = mutableMapOf<Pair<String, Int>, Int>()
     private var minutes = 30
 
@@ -57,35 +57,36 @@ class Tunnels(nodes: Collection<Node>) {
         if (cache.containsKey(currNodeName to minutes)) {
             return cache[currNodeName to minutes]!!
         }
-        if (minutes < 0) {
+        if (minutes <= 0) {
             return 0
         }
-        visited[currNodeName] = minutes
-
         // options are to spend a minute opening the current valve, then visit the children
         // or skip opening this valve
 
-        // open current valve
+        var maxSoFar = 0
         val currNode = graph[currNodeName]!!
-        val openCurrentValve = currNode.rate * (--minutes)
-        // and go to an unvisited child
-        val unvisitedChildren = currNode.neighbors - visited.keys
+        // open current valve (if unopened)
+        if (!opened.containsKey(currNodeName) && currNode.rate > 0) {
+            opened[currNodeName] = minutes
+            val openCurrentValve = currNode.rate * (--minutes)
+            // and visit children
+            var maxChild = 0
+            for (child in currNode.neighbors) {
+                // travel
+                minutes--
+                val result = dfs(child)
+                // backtrack
+                minutes++
+                maxChild = maxOf(maxChild, result)
+            }
+            maxSoFar = openCurrentValve + maxChild
+            // backtrack and don't open current valve
+            minutes++
+            opened.remove(currNodeName)
+        }
 
         var maxChild = 0
-        for (child in unvisitedChildren) {
-            // travel
-            minutes--
-            val result = dfs(child)
-            // backtrack
-            minutes++
-            maxChild = maxOf(maxChild, result)
-        }
-        val maxWithOpeningHere = openCurrentValve + maxChild
-
-        // backtrack and don't open current valve
-        minutes++
-        maxChild = 0
-        for (child in unvisitedChildren) {
+        for (child in currNode.neighbors) {
             // travel
             minutes--
             val result = dfs(child)
@@ -94,11 +95,9 @@ class Tunnels(nodes: Collection<Node>) {
             maxChild = maxOf(maxChild, result)
         }
         // compute max
-        val max = maxOf(maxWithOpeningHere, maxChild)
+        val max = maxOf(maxSoFar, maxChild)
         cache[currNodeName to minutes] = max
 
-        // backtrack visited
-        visited.remove(currNodeName)
         return max
     }
 
