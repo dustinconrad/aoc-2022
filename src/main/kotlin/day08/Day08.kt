@@ -1,10 +1,10 @@
 package day08
 
-import plane.Coord
-import plane.down
-import plane.left
-import plane.right
-import plane.up
+import geometry.Coord
+import geometry.down
+import geometry.left
+import geometry.right
+import geometry.up
 import readResourceAsBufferedReader
 
 fun main() {

@@ -1,8 +1,8 @@
 package day09
 
-import plane.Coord
-import plane.distance
-import plane.plus
+import geometry.Coord
+import geometry.distance
+import geometry.plus
 import readResourceAsBufferedReader
 import kotlin.math.sign
 

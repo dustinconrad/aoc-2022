@@ -1,9 +1,11 @@
 package day15
 
-import plane.Coord
-import plane.mdist
-import plane.x
-import plane.y
+import geometry.Coord
+import geometry.combine
+import geometry.mdist
+import geometry.overlaps
+import geometry.x
+import geometry.y
 import readResourceAsBufferedReader
 import kotlin.math.absoluteValue
 
@@ -14,16 +16,34 @@ fun main() {
 
 fun part1(input: List<String>, y: Int = 2000000): Int {
     val sensors = input.map { Sensor.parse(it) }
-    val overlaps = sensors.flatMap { it.yOverlap(y) }
-        .toSet()
+    val overlaps = sensors.foldRight(mutableSetOf<IntRange>()) { sensor, acc ->
+        val sensorOverlap = sensor.yOverlap(y)
+        val overlaps = acc.filter { it.overlaps(sensorOverlap) }.toSet()
+
+        if (overlaps.isEmpty()) {
+            acc.add(sensorOverlap)
+            acc
+        } else {
+            acc.removeAll(overlaps)
+            val combined = overlaps.fold(sensorOverlap) { l, r -> l.combine(r) }
+            acc.add(combined)
+            acc
+        }
+    }
+
+    var overlapCount = overlaps.sumOf { it.count() }
 
     val beacons = sensors.map { it.closestBeacon }
         .filter { it.y() == y }
         .toSet()
 
-    val noBeacons = overlaps - beacons
+    beacons.forEach { beacon ->
+        if (overlaps.any { it.contains(beacon.x()) })  {
+            overlapCount--
+        }
+    }
 
-    return noBeacons.size
+    return overlapCount
 }
 
 fun part2(input: List<String>): Int {
@@ -34,16 +54,15 @@ data class Sensor(val pos: Coord, val closestBeacon: Coord) {
 
     val manhattanDistance = pos.mdist(closestBeacon)
 
-    fun yOverlap(y: Int): Set<Coord> {
+    fun yOverlap(y: Int): IntRange {
         val yDist = (pos.y() - y).absoluteValue
         return if (yDist > manhattanDistance) {
-            emptySet()
+            IntRange.EMPTY
         } else {
             val xOffset = (manhattanDistance - yDist).absoluteValue
             val left = pos.x() - xOffset
             val right = pos.x() + xOffset
-            (left .. right).map { y to it }
-                .toSet()
+            return (left .. right)
         }
     }
 

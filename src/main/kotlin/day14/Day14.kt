@@ -1,10 +1,10 @@
 package day14
 
-import plane.Coord
-import plane.pathTo
-import plane.plus
-import plane.x
-import plane.y
+import geometry.Coord
+import geometry.pathTo
+import geometry.plus
+import geometry.x
+import geometry.y
 import readResourceAsBufferedReader
 import java.util.function.Predicate
 

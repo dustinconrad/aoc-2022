@@ -1,5 +1,8 @@
 package day04
 
+import geometry.disjoint
+import geometry.fullyContains
+import geometry.overlaps
 import readResourceAsBufferedReader
 
 fun main() {
@@ -25,18 +28,10 @@ private fun parse(line: String): SectionAssignment {
     return SectionAssignment(IntRange(lf, ll), IntRange(rf, rl))
 }
 
-fun IntRange.fullyContains(other: IntRange): Boolean {
-    return this.first <= other.first && this.last >= other.last
-}
-
-fun IntRange.disjoint(other: IntRange): Boolean {
-    return this.last < other.first || this.first > other.last
-}
-
 data class SectionAssignment(val l: IntRange, val r: IntRange) {
 
     val fullyContains = l.fullyContains(r) || r.fullyContains(l)
 
-    val overlaps = !l.disjoint(r)
+    val overlaps = l.overlaps(r)
 
 }
