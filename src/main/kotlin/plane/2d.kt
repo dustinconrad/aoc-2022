@@ -1,5 +1,6 @@
 package plane
 
+import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -27,6 +28,10 @@ fun Coord.left() = this.step(0 to -1)
 fun Coord.down() = this.step(1 to 0)
 
 fun Coord.up() = this.step(-1 to 0)
+
+fun Coord.mdist(other: Coord): Int {
+    return (this.y() - other.y()).absoluteValue + (this.x() - other.x()).absoluteValue
+}
 
 fun Coord.pathTo(end: Coord): Set<Coord> {
     return if (this.y() == end.y()) {
