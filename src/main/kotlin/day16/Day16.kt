@@ -1,5 +1,6 @@
 package day16
 
+import day17.Shape
 import geometry.Coord
 import readResourceAsBufferedReader
 import kotlin.math.min
@@ -55,7 +56,7 @@ data class OpenValve(val node: String): Action {
 data class Move(val from: String, val to: String): Action {
     override fun apply(state: SearchState): SearchState {
         return state.copy(
-            
+
         )
     }
 }
