@@ -8,6 +8,7 @@ import geometry.x
 import geometry.y
 import readResourceAsBufferedReader
 import kotlin.math.min
+import math.lcm
 
 fun main() {
     println("part 1: ${part1(readResourceAsBufferedReader("17_1.txt").readLine())}")
@@ -15,15 +16,12 @@ fun main() {
 }
 
 fun part1(input: String, blocks: Long = 2022): Long {
-    val jetstream = parseJetStream(input)
-    val tetris = Tetris(jetstream)
-    for (i in 0 until blocks) {
-        tetris.simulate()
-    }
+    val tetris = Tetris(input)
+    tetris.simulate(blocks)
     return tetris.tallest()
 }
 
-fun parseJetStream(line: String) = sequence<Coord> {
+fun createJetStream(line: String) = sequence<Coord> {
     val raw = line.map { if (it == '>') 0 to 1 else 0 to -1 }
 
     while (true) {
@@ -93,23 +91,36 @@ fun Set<Lcoord>.lMove(dir: Lcoord): Set<Lcoord> {
     return this.map { it.lplus(dir) }.toSet()
 }
 
-class Tetris(jets: Sequence<Coord>) {
-    private val jetsIter = jets.iterator()
+class Tetris(jets: String) {
+    private val jetsLength = jets.length
+    private val jetsIter = createJetStream(jets).iterator()
     private val shapeIter = shapeSequence().iterator()
 
     private val occupied = (0..7L).map { 0L to it }.toMutableSet()
     private var minY = 0L
 
+    val lcm: Long = lcm(jetsLength.toLong(), 5L)
+
     fun tallest(): Long = minY
 
-    fun simulate() {
+    fun simulate(blockCount: Long) {
+        fullSimulation(blockCount)
+    }
+
+    private fun fullSimulation(blockCount: Long) {
+        for (i in 0 until blockCount) {
+            simulateNextShape()
+        }
+    }
+
+    private fun simulateNextShape() {
         val shape = shapeIter.next()
         val start = (minY - 4) to 2L
         val s = shape.parts.lMove(start)
         fall(s)
     }
 
-    tailrec fun fall(shape: Set<Lcoord>) {
+    private tailrec fun fall(shape: Set<Lcoord>) {
         val jet = jetsIter.next()
         val jetMove = shape.move(jet)
         val toMoveDown =  if (jetMove.all { it.x() in 0..6 } && jetMove.none { occupied.contains(it) }) {
