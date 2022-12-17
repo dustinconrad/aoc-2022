@@ -4,8 +4,8 @@ import geometry.Coord
 import readResourceAsBufferedReader
 
 fun main() {
-    println("part 1: ${part1(readResourceAsBufferedReader("15_1.txt").readLines())}")
-    println("part 2: ${part2(readResourceAsBufferedReader("15_1.txt").readLines())}")
+    println("part 1: ${part1(readResourceAsBufferedReader("16_1.txt").readLines())}")
+    //println("part 2: ${part2(readResourceAsBufferedReader("15_1.txt").readLines())}")
 }
 
 data class Node(val name: String, val rate: Int, val neighbors: Set<String>) {
@@ -31,7 +31,6 @@ fun part1(input: List<String>): Int {
     val nodes = input.map { Node.parse(it) }
     val tunnels = Tunnels(nodes)
     val result = tunnels.dfs("AA")
-    println()
     return result
 }
 fun part2(input: List<String>, tl: Coord = 0 to 0, br: Coord = 4000000 to 4000000): Long {
@@ -42,7 +41,7 @@ class Tunnels(nodes: Collection<Node>) {
 
     private val graph = mutableMapOf<String, Node>()
     private val opened = LinkedHashMap<String, Int>()
-    private val cache = mutableMapOf<Pair<String, Int>, Int>()
+    private val cache = mutableMapOf<Triple<String, Set<String>, Int>, Int>()
     private var minutes = 30
 
     init {
@@ -54,8 +53,8 @@ class Tunnels(nodes: Collection<Node>) {
     }
 
     fun dfs(currNodeName: String): Int {
-        if (cache.containsKey(currNodeName to minutes)) {
-            return cache[currNodeName to minutes]!!
+        if (cache.containsKey(Triple(currNodeName, opened.keys, minutes))) {
+            return cache[Triple(currNodeName, opened.keys, minutes)]!!
         }
         if (minutes <= 0) {
             return 0
@@ -96,7 +95,7 @@ class Tunnels(nodes: Collection<Node>) {
         }
         // compute max
         val max = maxOf(maxSoFar, maxChild)
-        cache[currNodeName to minutes] = max
+        cache[Triple(currNodeName, opened.keys, minutes)] = max
 
         return max
     }
