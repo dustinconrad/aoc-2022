@@ -1,10 +1,7 @@
 package day16
 
-import combinations
-import day17.Shape
-import geometry.Coord
+import getCartesianProduct
 import readResourceAsBufferedReader
-import kotlin.math.min
 
 fun main() {
     println("part 1: ${part1(readResourceAsBufferedReader("16_1.txt").readLines())}")
@@ -36,8 +33,11 @@ fun part1(input: List<String>): Int {
     val result = tunnels.dfs("AA")
     return result
 }
-fun part2(input: List<String>, tl: Coord = 0 to 0, br: Coord = 4000000 to 4000000): Long {
-    TODO()
+fun part2(input: List<String>): Int {
+    val nodes = input.map { Node.parse(it) }
+    val tunnels = Tunnels(nodes)
+    val result = tunnels.dfs2(listOf("AA", "AA"))
+    return result
 }
 
 sealed interface Action {
@@ -58,8 +58,16 @@ data class OpenValve(val node: Node): Action {
 
 data class Move(val from: Node, val to: String): Action {
     override fun apply(state: SearchState): SearchState {
+        val nextNodes = state.currNodes.toMutableList()
+        for (i in nextNodes.indices) {
+            val node = nextNodes[i]
+            if (node == from.name) {
+                nextNodes[i] = to
+                break
+            }
+        }
         return state.copy(
-            currNodes = state.currNodes.map { if (it == from.name) to else it}.sorted()
+            currNodes = nextNodes.sorted()
         )
     }
 }
@@ -94,6 +102,15 @@ class Tunnels(nodes: Collection<Node>) {
         return dfs(initial)
     }
 
+    fun dfs2(currNodeName: List<String>, minute: Int = 26): Int {
+        val initial = SearchState(
+            currNodeName,
+            emptySet(),
+            minute
+        )
+        return dfs(initial)
+    }
+
     private fun dfs(state: SearchState): Int {
         if (cache.containsKey(state)) {
             return cache[state]!!
@@ -102,7 +119,7 @@ class Tunnels(nodes: Collection<Node>) {
             return 0
         }
         val actions = state.currNodes.map { actions(state, it) }
-        val actionCombinations = combinations(actions)
+        val actionCombinations = actions.getCartesianProduct()
         state.minute--
         val nextStates = actionCombinations
             .map { actCombo -> actCombo.foldRight(state) { act, acc -> act.apply(acc)} }
