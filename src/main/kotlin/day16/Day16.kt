@@ -42,22 +42,21 @@ fun part2(input: List<String>): Int {
 
 sealed interface Action {
 
-    fun apply(state: SearchState): SearchState
+    fun apply(state: SearchState): Pair<SearchState, Int>
 
 }
 
 data class OpenValve(val node: Node): Action {
-    override fun apply(state: SearchState): SearchState {
+    override fun apply(state: SearchState): Pair<SearchState, Int> {
         val result = state.copy(
             opened = state.opened + node.name
         )
-        result.score += node.rate * state.minute
-        return result
+        return result to node.rate * state.minute
     }
 }
 
 data class Move(val from: Node, val to: String): Action {
-    override fun apply(state: SearchState): SearchState {
+    override fun apply(state: SearchState): Pair<SearchState, Int> {
         val nextNodes = state.currNodes.toMutableList()
         for (i in nextNodes.indices) {
             val node = nextNodes[i]
@@ -68,7 +67,7 @@ data class Move(val from: Node, val to: String): Action {
         }
         return state.copy(
             currNodes = nextNodes.sorted()
-        )
+        ) to 0
     }
 }
 
@@ -122,9 +121,13 @@ class Tunnels(nodes: Collection<Node>) {
         val actionCombinations = actions.getCartesianProduct()
         state.minute--
         val nextStates = actionCombinations
-            .map { actCombo -> actCombo.foldRight(state) { act, acc -> act.apply(acc)} }
+            .map { actCombo -> actCombo.foldRight(state to 0) { act, (st, sc) ->
+                    val (newState, newScore) = act.apply(st)
+                    newState to newScore + sc
+                }
+            }.toSet()
 
-        val max = nextStates.maxOfOrNull { it.score + dfs(it) } ?: 0
+        val max = nextStates.maxOfOrNull { dfs(it.first) + it.second } ?: 0
         state.minute++
         cache[state] = max
         return max
