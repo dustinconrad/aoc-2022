@@ -5,7 +5,7 @@ import readResourceAsBufferedReader
 
 fun main() {
     println("part 1: ${part1(readResourceAsBufferedReader("16_1.txt").readLines())}")
-    //println("part 2: ${part2(readResourceAsBufferedReader("15_1.txt").readLines())}")
+    println("part 2: ${part2(readResourceAsBufferedReader("16_1.txt").readLines())}")
 }
 
 data class Node(val name: String, val rate: Int, val neighbors: Set<String>) {
