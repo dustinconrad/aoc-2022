@@ -108,6 +108,7 @@ class Tunnels(nodes: Collection<Node>) {
             .map { actCombo -> actCombo.foldRight(state) { act, acc -> act.apply(acc)} }
 
         val max = nextStates.maxOfOrNull { it.score + dfs(it) } ?: 0
+        state.minute++
         cache[state] = max
         return max
     }
@@ -115,7 +116,7 @@ class Tunnels(nodes: Collection<Node>) {
     private fun actions(currState: SearchState, currNodeName: String): List<Action> {
         val possibleActions = mutableListOf<Action>()
         val currNode = graph[currNodeName]!!
-        if (!currState.opened.contains(currNodeName)) {
+        if (!currState.opened.contains(currNodeName) && currNode.rate > 0) {
             possibleActions.add(OpenValve(currNode))
         }
         currNode.neighbors.forEach {
