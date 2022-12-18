@@ -4,7 +4,6 @@ import geometry.Coord3d
 import geometry.containedBy
 import geometry.neighbors
 import geometry.parseCoord3d
-import geometry.plus
 import geometry.x
 import geometry.y
 import geometry.z
@@ -12,7 +11,7 @@ import readResourceAsBufferedReader
 
 fun main() {
     println("part 1: ${part1(readResourceAsBufferedReader("18_1.txt").readLines())}")
-    //println("part 2: ${part2(readResourceAsBufferedReader("18_1.txt").readLines())}")
+    println("part 2: ${part2(readResourceAsBufferedReader("18_1.txt").readLines())}")
 }
 
 fun part1(input: List<String>): Int {
@@ -21,8 +20,10 @@ fun part1(input: List<String>): Int {
     return droplets.totalSurfaceArea
 }
 
-fun part2(input: List<String>): Long {
-    TODO()
+fun part2(input: List<String>): Int {
+    val coords = input.map { parseCoord3d(it) }
+    val droplets = LavaDroplets(coords)
+    return droplets.outerSurfaceArea()
 }
 
 class LavaDroplets(droplets: Collection<Coord3d>) {
@@ -33,12 +34,12 @@ class LavaDroplets(droplets: Collection<Coord3d>) {
     private val max: Coord3d
 
     init {
-        var minX = Int.MIN_VALUE
-        var maxX = Int.MAX_VALUE
-        var minY = Int.MIN_VALUE
-        var maxY = Int.MAX_VALUE
-        var minZ = Int.MIN_VALUE
-        var maxZ = Int.MAX_VALUE
+        var minX = Int.MAX_VALUE
+        var maxX = Int.MIN_VALUE
+        var minY = Int.MAX_VALUE
+        var maxY = Int.MIN_VALUE
+        var minZ = Int.MAX_VALUE
+        var maxZ = Int.MIN_VALUE
         droplets.forEach {
             minX = minOf(minX, it.x())
             maxX = maxOf(maxX, it.x())
@@ -51,10 +52,10 @@ class LavaDroplets(droplets: Collection<Coord3d>) {
         max = Triple(maxX, maxY, maxZ)
     }
 
-    private fun surfaceArea(droplets: Collection<Coord3d>): Int {
+    private fun surfaceArea(droplets: Collection<Coord3d>, validate: (Coord3d) -> Boolean): Int {
         val surfaceAreas = droplets.associateWith { 6 }.toMutableMap()
         surfaceAreas.keys.forEach {
-            val neighbors = neighbors(it)
+            val neighbors = neighbors(it, validate)
             neighbors.forEach { n ->
                 surfaceAreas[n] = surfaceAreas[n]!! - 1
             }
@@ -62,15 +63,24 @@ class LavaDroplets(droplets: Collection<Coord3d>) {
         return surfaceAreas.values.sum()
     }
 
-    private fun neighbors(droplet: Coord3d): Set<Coord3d> {
+    private fun neighbors(droplet: Coord3d, validate: (Coord3d) -> Boolean): Set<Coord3d> {
         return droplet.neighbors()
-            .filter { droplets.contains(it) }
+            .filter { validate(it) }
             .toSet()
     }
 
-    val totalSurfaceArea = surfaceArea(droplets)
+    val totalSurfaceArea = surfaceArea(droplets) { droplets.contains(it) }
 
-    fun islands() {
+    fun outerSurfaceArea(): Int {
+        val internalIslands = internalIslands()
+        val internalSurfaceAreas =
+            internalIslands.associateWith { island -> surfaceArea(island) { !droplets.contains(it) } }
+        val internalSurfaceArea = internalSurfaceAreas.values.sum()
+
+        return totalSurfaceArea - internalSurfaceArea
+    }
+
+    fun internalIslands(): Set<Set<Coord3d>> {
         val unvisited = mutableSetOf<Coord3d>()
         for (x in min.x()..max.x()) {
             for (y in min.y()..max.y()) {
@@ -100,7 +110,7 @@ class LavaDroplets(droplets: Collection<Coord3d>) {
                 }
                 currIsland.add(next)
 
-                val neighbors = next.neighbors().map { next + it}
+                val neighbors = next.neighbors()
                 if (neighbors.any { !it.containedBy(min, max)}) {
                     isInternal = false
                 }
@@ -115,7 +125,7 @@ class LavaDroplets(droplets: Collection<Coord3d>) {
             }
         }
 
-
+        return internalIslands
     }
 
 }
