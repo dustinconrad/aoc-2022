@@ -32,3 +32,16 @@ fun List<String>.byEmptyLines(): List<String> {
     }
     return result
 }
+
+fun <T> combinations(itemLists: List<List<T>>): Set<List<T>> =
+    when {
+        itemLists.isEmpty() -> emptySet()
+        itemLists.size == 1 -> itemLists[0].map { listOf(it) }.toSet()
+        else -> {
+            val base: List<T> = itemLists[0]
+
+            combinations(itemLists.subList(1, itemLists.size))
+                .flatMap { ls -> base.map { mutableListOf(it) + ls } }
+                .toSet()
+        }
+    }

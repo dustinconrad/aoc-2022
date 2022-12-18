@@ -1,5 +1,6 @@
 package day16
 
+import combinations
 import day17.Shape
 import geometry.Coord
 import readResourceAsBufferedReader
@@ -45,18 +46,20 @@ sealed interface Action {
 
 }
 
-data class OpenValve(val node: String): Action {
+data class OpenValve(val node: Node): Action {
     override fun apply(state: SearchState): SearchState {
-        return state.copy(
-            opened = state.opened + node
+        val result = state.copy(
+            opened = state.opened + node.name
         )
+        result.score += node.rate * state.minute
+        return result
     }
 }
 
-data class Move(val from: String, val to: String): Action {
+data class Move(val from: Node, val to: String): Action {
     override fun apply(state: SearchState): SearchState {
         return state.copy(
-
+            currNodes = state.currNodes.map { if (it == from.name) to else it}.sorted()
         )
     }
 }
@@ -64,8 +67,10 @@ data class Move(val from: String, val to: String): Action {
 data class SearchState(
     val currNodes: List<String>,
     val opened: Set<String>,
-    val minute: Int
-)
+    var minute: Int
+) {
+    var score = 0
+}
 
 class Tunnels(nodes: Collection<Node>) {
 
@@ -86,55 +91,37 @@ class Tunnels(nodes: Collection<Node>) {
             emptySet(),
             minute
         )
-        return 0
+        return dfs(initial)
     }
 
-//    fun dfs(state: SearchState): Int {
-//        if (cache.containsKey(state)) {
-//            return cache[state]!!
-//        }
-//        if (state.minute <= 0) {
-//            return 0
-//        }
-//        // options are to spend a minute opening the current valve, then visit the children
-//        // or skip opening this valve
-//
-//        var maxSoFar = 0
-//        val currNode = graph[currNodeName]!!
-//        // open current valve (if unopened)
-//        if (!opened.containsKey(currNodeName) && currNode.rate > 0) {
-//            opened[currNodeName] = minutes
-//            val openCurrentValve = currNode.rate * (--minutes)
-//            // and visit children
-//            var maxChild = 0
-//            for (child in currNode.neighbors) {
-//                // travel
-//                minutes--
-//                val result = dfs(child)
-//                // backtrack
-//                minutes++
-//                maxChild = maxOf(maxChild, result)
-//            }
-//            maxSoFar = openCurrentValve + maxChild
-//            // backtrack and don't open current valve
-//            minutes++
-//            opened.remove(currNodeName)
-//        }
-//
-//        var maxChild = 0
-//        for (child in currNode.neighbors) {
-//            // travel
-//            minutes--
-//            val result = dfs(child)
-//            // backtrack
-//            minutes++
-//            maxChild = maxOf(maxChild, result)
-//        }
-//        // compute max
-//        val max = maxOf(maxSoFar, maxChild)
-//        cache[Triple(currNodeName, opened.keys, minutes)] = max
-//
-//        return max
-//    }
+    private fun dfs(state: SearchState): Int {
+        if (cache.containsKey(state)) {
+            return cache[state]!!
+        }
+        if (state.minute <= 0) {
+            return 0
+        }
+        val actions = state.currNodes.map { actions(state, it) }
+        val actionCombinations = combinations(actions)
+        state.minute--
+        val nextStates = actionCombinations
+            .map { actCombo -> actCombo.foldRight(state) { act, acc -> act.apply(acc)} }
+
+        val max = nextStates.maxOfOrNull { it.score + dfs(it) } ?: 0
+        cache[state] = max
+        return max
+    }
+
+    private fun actions(currState: SearchState, currNodeName: String): List<Action> {
+        val possibleActions = mutableListOf<Action>()
+        val currNode = graph[currNodeName]!!
+        if (!currState.opened.contains(currNodeName)) {
+            possibleActions.add(OpenValve(currNode))
+        }
+        currNode.neighbors.forEach {
+            possibleActions.add(Move(currNode, it))
+        }
+        return possibleActions
+    }
 
 }
