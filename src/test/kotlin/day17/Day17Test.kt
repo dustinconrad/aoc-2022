@@ -12,7 +12,7 @@ class Day17Test {
         """.trimIndent()
             .lines()
 
-        assertEquals(-3068L, part1(input.first()))
+        assertEquals(3068L, part1(input.first(), 2022))
     }
 
     @Test
@@ -22,7 +22,7 @@ class Day17Test {
         """.trimIndent()
             .lines()
 
-        assertEquals(-1514285714288, part1(input.first(), 1000000000000L))
+        assertEquals(1514285714288, part2(input.first(), 1000000000000L))
     }
 
 

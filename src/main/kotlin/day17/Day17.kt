@@ -6,19 +6,26 @@ import geometry.cplus
 import geometry.lplus
 import geometry.x
 import geometry.y
+import geometry.plus
 import readResourceAsBufferedReader
+import kotlin.math.absoluteValue
 import kotlin.math.min
 
 fun main() {
     println("part 1: ${part1(readResourceAsBufferedReader("17_1.txt").readLine())}")
-    //println("part 2: ${part2(readResourceAsBufferedReader("17_1.txt").readLines())}")
+    println("part 2: ${part2(readResourceAsBufferedReader("17_1.txt").readLine())}")
 }
 
 fun part1(input: String, blocks: Long = 2022): Long {
     val jetStream = parseJetStream(input)
     val tetris = Tetris(jetStream)
-    tetris.simulate(blocks)
-    return tetris.tallest()
+    return tetris.simulate(blocks)
+}
+
+fun part2(input: String, blocks: Long = 1000000000000): Long {
+    val jetStream = parseJetStream(input)
+    val tetris = Tetris(jetStream)
+    return tetris.simulate(blocks)
 }
 
 fun parseJetStream(line: String): List<Coord> {
@@ -27,10 +34,6 @@ fun parseJetStream(line: String): List<Coord> {
 
 private fun createMoves(jetStream: List<Coord>): List<Coord> {
     return jetStream.flatMap { listOf(it, 1 to 0) }
-}
-
-fun part2(input: List<String>): Long {
-    TODO()
 }
 
 sealed interface Shape {
@@ -97,49 +100,122 @@ fun List<Coord>.cycle() = sequence {
     }
 }
 
+class TetrisStateGraph {
+    private val graph = mutableMapOf<TetrisState, MutableList<TetrisState>>()
+    private var lastState: TetrisState? = null
+    private val shapes: ArrayDeque<Pair<Shape, Coord>> = ArrayDeque()
+
+
+    fun add(shape: Pair<Shape, Coord>) {
+        shapes.add(shape)
+        if (shapes.size > 6) {
+            shapes.removeFirst()
+        }
+        val state = TetrisState(shapes.toList())
+        add(state)
+    }
+
+    fun add(state: TetrisState) {
+        if(lastState != null) {
+            val neighbors = graph.getOrPut(lastState!!) { mutableListOf() }
+            neighbors.add(state)
+        }
+        lastState = state
+    }
+
+    fun cycle(): Int {
+        return cycle(lastState!!, emptySet())
+    }
+
+    private fun cycle(curr: TetrisState, visited: Set<TetrisState>): Int {
+        return when {
+            visited.contains(curr) -> {
+                visited.size
+            }
+            graph[curr].isNullOrEmpty() -> 0
+            else -> {
+                val neighbors = graph[curr]
+                neighbors?.maxOfOrNull { cycle(it, visited + curr) } ?: 0
+            }
+        }
+    }
+
+}
+
+data class TetrisState(
+    val shapes: List<Pair<Shape,Coord>>
+)
+
 class Tetris(jetStream: List<Coord>) {
     private val moves = createMoves(jetStream)
     private val movesIter = moves.cycle().iterator()
     private val shapeIter = shapeSequence().iterator()
+    private val graph = TetrisStateGraph()
 
     private val occupied = (0..7L).map { 0L to it }.toMutableSet()
     private var minY = 0L
 
     fun tallest(): Long = minY
 
-    fun simulate(blockCount: Long) {
-        fullSimulation(blockCount)
+    fun simulate(blockCount: Long): Long {
+        return fullSimulation(blockCount)
     }
 
-    private fun fullSimulation(blockCount: Long) {
+    private fun fullSimulation(blockCount: Long): Long {
+        val history = mutableListOf<Long>()
+        var cycleLength: Int = 0
         for (i in 0 until blockCount) {
-            simulateNextShape()
+            val result = simulateNextShape()
+            history.add(tallest())
+            graph.add(result)
+            cycleLength = graph.cycle()
+            if (cycleLength != 0) {
+                break
+            }
+//            println("$i: $result")
+//            val s = this.toString()
+//            val print = s.substring(0, min(s.length, 112))
+//            println(print)
 //            println()
-//            println(this)
         }
+        val endIdx = history.size - 1
+        val startIdx = endIdx - cycleLength
+        val cycleStartHeight = history[startIdx].absoluteValue
+        val cycleEndHeight = history[endIdx].absoluteValue
+        val cycleHeight = cycleEndHeight - cycleStartHeight
+        val cyclesInBlockCount = (blockCount - startIdx) / cycleLength
+        val height = cycleHeight * cyclesInBlockCount + cycleStartHeight
+        val simulatedBlocks = startIdx + cyclesInBlockCount * cycleLength
+
+        val remainingBlocks = (blockCount - simulatedBlocks).toInt()
+        val remainingBlocksHeight = history[startIdx + remainingBlocks - 1].absoluteValue - cycleStartHeight
+
+        return height + remainingBlocksHeight
     }
 
-    private fun simulateNextShape() {
+    private fun simulateNextShape(): Pair<Shape, Coord> {
         val shape = shapeIter.next()
         val start = (minY - 4) to 2L
         val s = shape.parts.lMove(start)
-        fall(s)
+        val relativePos = fall(s)
+        return shape to relativePos
     }
 
-    private tailrec fun fall(shape: Set<Lcoord>) {
+    private fun fall(shape: Set<Lcoord>): Coord {
         val jet = movesIter.next()
         val isDown = jet == 1 to 0
         val jetMove = shape.move(jet)
 
         val wouldConflict = jetMove.any { it.x() < 0 || it.x() > 6 || occupied.contains(it) }
 
-        when {
+        return when {
             wouldConflict && isDown -> {
                 minY = min(minY, shape.minOf { it.y() })
                 occupied.addAll(shape)
+                return 0 to 0
             }
             wouldConflict -> fall(shape)
-            else -> fall(jetMove)
+            else -> jet + fall(jetMove)
         }
     }
 
