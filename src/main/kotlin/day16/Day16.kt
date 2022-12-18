@@ -48,10 +48,14 @@ sealed interface Action {
 
 data class OpenValve(val node: Node): Action {
     override fun apply(state: SearchState): Pair<SearchState, Int> {
-        val result = state.copy(
-            opened = state.opened + node.name
-        )
-        return result to node.rate * state.minute
+        return if (!state.opened.contains(node.name)) {
+            val result = state.copy(
+                opened = state.opened + node.name
+            )
+            result to node.rate * state.minute
+        } else {
+            state to 0
+        }
     }
 }
 
@@ -114,7 +118,7 @@ class Tunnels(nodes: Collection<Node>) {
         if (cache.containsKey(state)) {
             return cache[state]!!
         }
-        if (state.minute <= 0) {
+        if (state.minute <= 0 || state.opened.size == graph.values.filter { it.rate > 0 }.size) {
             return 0
         }
         val actions = state.currNodes.map { actions(state, it) }
