@@ -1,6 +1,7 @@
 package day17
 
 import org.junit.jupiter.api.Test
+import readResourceAsBufferedReader
 import kotlin.test.assertEquals
 
 class Day17Test {
@@ -13,6 +14,13 @@ class Day17Test {
             .lines()
 
         assertEquals(3068L, part1(input.first(), 2022))
+    }
+
+    @Test
+    fun testPart1Input() {
+        val input = readResourceAsBufferedReader("17_1.txt").readLine()
+
+        assertEquals(3102, part1(input, 2022L))
     }
 
     @Test

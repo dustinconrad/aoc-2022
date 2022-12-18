@@ -108,7 +108,7 @@ class TetrisStateGraph {
 
     fun add(shape: Pair<Shape, Coord>) {
         shapes.add(shape)
-        if (shapes.size > 6) {
+        if (shapes.size > 10) {
             shapes.removeFirst()
         }
         val state = TetrisState(shapes.toList())
@@ -169,14 +169,15 @@ class Tetris(jetStream: List<Coord>) {
             history.add(tallest())
             graph.add(result)
             cycleLength = graph.cycle()
-            if (cycleLength != 0) {
-                break
-            }
 //            println("$i: $result")
 //            val s = this.toString()
 //            val print = s.substring(0, min(s.length, 112))
 //            println(print)
 //            println()
+            if (cycleLength != 0) {
+                break
+            }
+
         }
         val endIdx = history.size - 1
         val startIdx = endIdx - cycleLength
