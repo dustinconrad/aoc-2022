@@ -8,44 +8,6 @@ fun main() {
     println("part 2: ${part2(readResourceAsBufferedReader("16_1.txt").readLines())}")
 }
 
-fun shortenAll(nodes: Collection<Node>): Collection<Node> {
-    val nodeLookup = nodes.associateBy { it.name }.toMutableMap()
-    val newNodes = mutableListOf<Node>()
-
-    for (node in nodes) {
-        val newNode = shorten(nodeLookup, node)
-        nodeLookup[newNode.name] = node
-        newNodes.add(newNode)
-    }
-
-    return newNodes
-}
-
-fun shorten(nodeLookup: Map<String, Node>, node: Node): Node {
-    val newNeighbors = mutableMapOf<String, Int>()
-    val q = ArrayDeque<Pair<String, Int>>()
-    q.addAll(node.neighbors.toList())
-    while(q.isNotEmpty()) {
-        val (candidate, dist) = q.removeFirst()
-        if (newNeighbors.contains(candidate)) {
-            continue
-        }
-
-        val candidateNode = nodeLookup[candidate]!!
-        if (candidateNode.rate > 0) {
-            newNeighbors[candidate] = dist
-        } else {
-            q.addAll(candidateNode.neighbors.map { (k, v) -> k to v + dist })
-        }
-    }
-
-    return node.copy(
-        neighbors = newNeighbors
-    )
-}
-
-
-
 data class Node(val name: String, val rate: Int, val neighbors: Map<String, Int>) {
 
     companion object {
@@ -66,7 +28,7 @@ data class Node(val name: String, val rate: Int, val neighbors: Map<String, Int>
 }
 
 fun part1(input: List<String>): Int {
-    val nodes = input.map { Node.parse(it) }
+    var nodes = input.map { Node.parse(it) }
     val tunnels = Tunnels(nodes)
     val result = tunnels.dfs("AA")
     return result
@@ -82,6 +44,8 @@ sealed interface Action {
 
     fun apply(state: SearchState): Pair<SearchState, Int>
 
+    fun cost(): Int
+
 }
 
 data class OpenValve(val node: Node): Action {
@@ -95,9 +59,13 @@ data class OpenValve(val node: Node): Action {
             state to 0
         }
     }
+
+    override fun cost(): Int {
+        return 1
+    }
 }
 
-data class Move(val from: Node, val to: String): Action {
+data class Move(val from: Node, val to: String, val dist: Int): Action {
     override fun apply(state: SearchState): Pair<SearchState, Int> {
         val nextNodes = state.currNodes.toMutableList()
         for (i in nextNodes.indices) {
@@ -110,6 +78,10 @@ data class Move(val from: Node, val to: String): Action {
         return state.copy(
             currNodes = nextNodes.sorted()
         ) to 0
+    }
+
+    override fun cost(): Int {
+        return dist
     }
 }
 
@@ -154,7 +126,7 @@ class Tunnels(nodes: Collection<Node>) {
         if (cache.containsKey(state)) {
             return cache[state]!!
         }
-        if (state.minute <= 0 || state.opened.size == graph.values.filter { it.rate > 0 }.size) {
+        if (state.minute <= 0) {
             return 0
         }
         val actions = state.currNodes.map { actions(state, it) }
@@ -175,14 +147,59 @@ class Tunnels(nodes: Collection<Node>) {
 
     private fun actions(currState: SearchState, currNodeName: String): List<Action> {
         val possibleActions = mutableListOf<Action>()
-        val currNode = graph[currNodeName]!!
+        val currNode = graph[currNodeName] ?: throw IllegalArgumentException("Unknown node name: $currNodeName")
         if (!currState.opened.contains(currNodeName) && currNode.rate > 0) {
             possibleActions.add(OpenValve(currNode))
         }
         currNode.neighbors.forEach {
-            possibleActions.add(Move(currNode, it.key))
+            possibleActions.add(Move(currNode, it.key, it.value))
         }
         return possibleActions
     }
 
 }
+
+
+fun shortenAll(nodes: Collection<Node>): List<Node> {
+    val nodeLookup = nodes.associateBy { it.name }.toMutableMap()
+    val newNodes = mutableListOf<Node>()
+
+    for (node in nodes) {
+        if (node.name != "AA" && node.rate == 0) {
+            continue
+        }
+        val newNode = shorten(nodeLookup, node)
+        nodeLookup[newNode.name] = node
+        newNodes.add(newNode)
+    }
+
+    return newNodes
+}
+
+fun shorten(nodeLookup: Map<String, Node>, node: Node): Node {
+    val newNeighbors = mutableMapOf<String, Int>()
+    val visited = mutableSetOf<String>()
+    visited.add(node.name)
+    val q = ArrayDeque<Pair<String, Int>>()
+    q.addAll(node.neighbors.toList())
+    while(q.isNotEmpty()) {
+        val (candidate, dist) = q.removeFirst()
+        if (visited.contains(candidate)) {
+            continue
+        } else {
+            visited.add(candidate)
+        }
+
+        val candidateNode = nodeLookup[candidate]!!
+        if (candidateNode.rate > 0) {
+            newNeighbors[candidate] = dist
+        } else {
+            q.addAll(candidateNode.neighbors.map { (k, v) -> k to v + dist })
+        }
+    }
+
+    return node.copy(
+        neighbors = newNeighbors
+    )
+}
+
