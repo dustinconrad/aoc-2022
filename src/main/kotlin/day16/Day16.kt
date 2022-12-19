@@ -8,7 +8,45 @@ fun main() {
     println("part 2: ${part2(readResourceAsBufferedReader("16_1.txt").readLines())}")
 }
 
-data class Node(val name: String, val rate: Int, val neighbors: Set<String>) {
+fun shortenAll(nodes: Collection<Node>): Collection<Node> {
+    val nodeLookup = nodes.associateBy { it.name }.toMutableMap()
+    val newNodes = mutableListOf<Node>()
+
+    for (node in nodes) {
+        val newNode = shorten(nodeLookup, node)
+        nodeLookup[newNode.name] = node
+        newNodes.add(newNode)
+    }
+
+    return newNodes
+}
+
+fun shorten(nodeLookup: Map<String, Node>, node: Node): Node {
+    val newNeighbors = mutableMapOf<String, Int>()
+    val q = ArrayDeque<Pair<String, Int>>()
+    q.addAll(node.neighbors.toList())
+    while(q.isNotEmpty()) {
+        val (candidate, dist) = q.removeFirst()
+        if (newNeighbors.contains(candidate)) {
+            continue
+        }
+
+        val candidateNode = nodeLookup[candidate]!!
+        if (candidateNode.rate > 0) {
+            newNeighbors[candidate] = dist
+        } else {
+            q.addAll(candidateNode.neighbors.map { (k, v) -> k to v + dist })
+        }
+    }
+
+    return node.copy(
+        neighbors = newNeighbors
+    )
+}
+
+
+
+data class Node(val name: String, val rate: Int, val neighbors: Map<String, Int>) {
 
     companion object {
 
@@ -20,7 +58,7 @@ data class Node(val name: String, val rate: Int, val neighbors: Set<String>) {
             return Node(
                 name,
                 rate.toInt(),
-                neighbors.split(",").map { it.trim() }.toSet()
+                neighbors.split(",").map { it.trim() }.associateWith { 1 }
             )
         }
 
@@ -79,9 +117,7 @@ data class SearchState(
     val currNodes: List<String>,
     val opened: Set<String>,
     var minute: Int
-) {
-    var score = 0
-}
+)
 
 class Tunnels(nodes: Collection<Node>) {
 
@@ -144,7 +180,7 @@ class Tunnels(nodes: Collection<Node>) {
             possibleActions.add(OpenValve(currNode))
         }
         currNode.neighbors.forEach {
-            possibleActions.add(Move(currNode, it))
+            possibleActions.add(Move(currNode, it.key))
         }
         return possibleActions
     }
