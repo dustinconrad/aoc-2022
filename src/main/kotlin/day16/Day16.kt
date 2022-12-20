@@ -33,6 +33,7 @@ fun part1(input: List<String>): Int {
     val result = tunnels.dfs("AA")
     return result
 }
+
 fun part2(input: List<String>): Int {
     val nodes = input.map { Node.parse(it) }
     val tunnels = Tunnels(nodes)
@@ -76,33 +77,27 @@ data class OpenValve(val node: Node): Action {
 
 data class Move(val from: Node, val to: String, val dist: Int): Action {
     override fun apply(state: SearchState): Pair<SearchState, Int> {
-        val nextNodes = state.currNodes.toMutableList()
-        for (i in nextNodes.indices) {
-            val node = nextNodes[i]
+        for (i in state.currNodes.indices) {
+            val node = state.currNodes[i]
             if (node == from.name) {
-                nextNodes[i] = to
+                state.currNodes[i] = to
                 break
             }
         }
-        nextNodes.sort()
-        return state.copy(
-            currNodes = nextNodes
-        ) to 0
+        state.currNodes.sort()
+        return state to 0
     }
 
     override fun undo(state: SearchState): SearchState {
-        val prevNodes = state.currNodes.toMutableList()
-        for (i in prevNodes.indices) {
-            val node = prevNodes[i]
+        for (i in state.currNodes.indices) {
+            val node = state.currNodes[i]
             if (node == to) {
-                prevNodes[i] = from.name
+                state.currNodes[i] = from.name
                 break
             }
         }
-        prevNodes.sort()
-        return state.copy(
-            currNodes = prevNodes
-        )
+        state.currNodes.sort()
+        return state
     }
 
     override fun cost(): Int {
@@ -112,8 +107,8 @@ data class Move(val from: Node, val to: String, val dist: Int): Action {
 
 data class SearchState(
     val currNodes: MutableList<String>,
+    var minute: Int,
     val opened: MutableSet<String>,
-    var minute: Int
 )
 
 class Tunnels(nodes: Collection<Node>) {
@@ -132,8 +127,8 @@ class Tunnels(nodes: Collection<Node>) {
     fun dfs(currNodeName: String, minute: Int = 30): Int {
         val initial = SearchState(
             mutableListOf(currNodeName),
+            minute,
             mutableSetOf(),
-            minute
         )
         return dfs(initial)
     }
@@ -141,8 +136,8 @@ class Tunnels(nodes: Collection<Node>) {
     fun dfs2(currNodeName: List<String>, minute: Int = 26): Int {
         val initial = SearchState(
             currNodeName.toMutableList(),
+            minute,
             mutableSetOf(),
-            minute
         )
         return dfs(initial)
     }
@@ -173,7 +168,7 @@ class Tunnels(nodes: Collection<Node>) {
             }
         }
         state.minute++
-        cache[state] = max
+        cache[state.copy(currNodes = state.currNodes.toMutableList())] = max
         return max
     }
 
