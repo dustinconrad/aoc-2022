@@ -44,6 +44,8 @@ sealed interface Action {
 
     fun apply(state: SearchState): Pair<SearchState, Int>
 
+    fun undo(state: SearchState): SearchState
+
     fun cost(): Int
 
 }
@@ -51,12 +53,19 @@ sealed interface Action {
 data class OpenValve(val node: Node): Action {
     override fun apply(state: SearchState): Pair<SearchState, Int> {
         return if (!state.opened.contains(node.name)) {
-            val result = state.copy(
-                opened = state.opened + node.name
-            )
-            result to node.rate * state.minute
+            state.opened.add(node.name)
+            state to node.rate * state.minute
         } else {
             state to 0
+        }
+    }
+
+    override fun undo(state: SearchState): SearchState {
+        return if (state.opened.contains(node.name)) {
+            state.opened.remove(node.name)
+            state
+        } else {
+            state
         }
     }
 
@@ -75,9 +84,25 @@ data class Move(val from: Node, val to: String, val dist: Int): Action {
                 break
             }
         }
+        nextNodes.sort()
         return state.copy(
-            currNodes = nextNodes.sorted()
+            currNodes = nextNodes
         ) to 0
+    }
+
+    override fun undo(state: SearchState): SearchState {
+        val prevNodes = state.currNodes.toMutableList()
+        for (i in prevNodes.indices) {
+            val node = prevNodes[i]
+            if (node == to) {
+                prevNodes[i] = from.name
+                break
+            }
+        }
+        prevNodes.sort()
+        return state.copy(
+            currNodes = prevNodes
+        )
     }
 
     override fun cost(): Int {
@@ -86,8 +111,8 @@ data class Move(val from: Node, val to: String, val dist: Int): Action {
 }
 
 data class SearchState(
-    val currNodes: List<String>,
-    val opened: Set<String>,
+    val currNodes: MutableList<String>,
+    val opened: MutableSet<String>,
     var minute: Int
 )
 
@@ -106,8 +131,8 @@ class Tunnels(nodes: Collection<Node>) {
 
     fun dfs(currNodeName: String, minute: Int = 30): Int {
         val initial = SearchState(
-            listOf(currNodeName),
-            emptySet(),
+            mutableListOf(currNodeName),
+            mutableSetOf(),
             minute
         )
         return dfs(initial)
@@ -115,8 +140,8 @@ class Tunnels(nodes: Collection<Node>) {
 
     fun dfs2(currNodeName: List<String>, minute: Int = 26): Int {
         val initial = SearchState(
-            currNodeName,
-            emptySet(),
+            currNodeName.toMutableList(),
+            mutableSetOf(),
             minute
         )
         return dfs(initial)
@@ -132,14 +157,21 @@ class Tunnels(nodes: Collection<Node>) {
         val actions = state.currNodes.map { actions(state, it) }
         val actionCombinations = actions.getCartesianProduct()
         state.minute--
-        val nextStates = actionCombinations
-            .map { actCombo -> actCombo.foldRight(state to 0) { act, (st, sc) ->
-                    val (newState, newScore) = act.apply(st)
-                    newState to newScore + sc
-                }
-            }.toSet()
 
-        val max = nextStates.maxOfOrNull { dfs(it.first) + it.second } ?: 0
+        var max = Integer.MIN_VALUE
+        actionCombinations.forEach { actions ->
+            val (nextState, score) = actions.foldRight(state to 0) { act, (st, sc) ->
+                val (newState, newScore) = act.apply(st)
+                newState to newScore + sc
+            }
+
+            val nextScore = dfs(nextState) + score
+            max = maxOf(max, nextScore)
+
+            actions.forEach {
+                it.undo(nextState)
+            }
+        }
         state.minute++
         cache[state] = max
         return max
