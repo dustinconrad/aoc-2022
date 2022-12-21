@@ -2,6 +2,7 @@ package day16
 
 import getCartesianProduct
 import readResourceAsBufferedReader
+import java.util.UUID
 
 fun main() {
     println("part 1: ${part1(readResourceAsBufferedReader("16_1.txt").readLines())}")
@@ -126,18 +127,18 @@ class Tunnels(nodes: Collection<Node>) {
 
     fun dfs(currNodeName: String, minute: Int = 30): Int {
         val initial = SearchState(
-            mutableListOf(currNodeName),
-            minute,
-            mutableSetOf(),
+            currNodes = mutableListOf(currNodeName),
+            minute = minute,
+            opened = mutableSetOf(),
         )
         return dfs(initial)
     }
 
     fun dfs2(currNodeName: List<String>, minute: Int = 26): Int {
         val initial = SearchState(
-            currNodeName.toMutableList(),
-            minute,
-            mutableSetOf(),
+            currNodes = currNodeName.toMutableList(),
+            minute = minute,
+            opened = mutableSetOf(),
         )
         return dfs(initial)
     }
@@ -168,6 +169,7 @@ class Tunnels(nodes: Collection<Node>) {
             }
         }
         state.minute++
+        //cache[state] = max
         cache[state.copy(currNodes = state.currNodes.toMutableList())] = max
         return max
     }
