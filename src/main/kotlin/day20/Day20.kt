@@ -4,7 +4,7 @@ import readResourceAsBufferedReader
 
 fun main() {
     println("part 1: ${part1(readResourceAsBufferedReader("20_1.txt").readLines())}")
-    println("part 2: ${part2(readResourceAsBufferedReader("20_1.txt").readLines())}")
+    //println("part 2: ${part2(readResourceAsBufferedReader("20_1.txt").readLines())}")
 }
 
 fun part1(input: List<String>): Int {
@@ -33,15 +33,14 @@ class EncryptedFile(private val contents: List<Int>) {
         val index = state.indexOf(selected)
 
         var newIndex = indexAfterOffset(index, selected)
+        if (newIndex < index) {
+            newIndex++
+        }
 
         val result = state.toMutableList()
         if (index != newIndex) {
             result.removeAt(index)
-            if (newIndex == 0) {
-                result.add(selected)
-            } else {
-                result.add(newIndex, selected)
-            }
+            result.add(newIndex, selected)
         }
 
         return result

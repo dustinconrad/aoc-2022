@@ -4,21 +4,22 @@ import readResourceAsBufferedReader
 
 fun main() {
     println("part 1: ${part1(readResourceAsBufferedReader("21_1.txt").readLines())}")
-    //println("part 2: ${part2(readResourceAsBufferedReader("21_1.txt").readLines())}")
+    println("part 2: ${part2(readResourceAsBufferedReader("21_2.txt").readLines())}")
 }
 
 fun part1(input: List<String>): Long {
     val nodes = input.map { Node.parse(it) }
     val monkeyGraph = MonkeyGraph(nodes)
-    val result = monkeyGraph.process()
+    val result = monkeyGraph.nodeValue()
     return result
 }
 
 fun part2(input: List<String>): Long {
-    TODO()
+    val nodes = input.map { Node.parse(it) }
+    val monkeyGraph = MonkeyGraph(nodes)
+    val result = monkeyGraph.process()
+    return 0
 }
-
-
 
 sealed interface Node {
     fun evaluate(lookup: Map<String, Long>): Long
@@ -86,7 +87,13 @@ class MonkeyGraph(nodes: Collection<Node>) {
     private val _values: MutableMap<String, Long> = mutableMapOf()
     private val graph = nodes.associateBy { it.name }
 
-    fun process(target: String = "root"): Long {
+    fun nodeValue(target: String = "root"): Long {
+        process()
+
+        return _values[target]!!
+    }
+
+    fun process() {
         val reverseGraph = reverseGraph()
 
         val zeroIn = graph.values.filter { it.inDegree == 0 }
@@ -105,8 +112,6 @@ class MonkeyGraph(nodes: Collection<Node>) {
                 }
             }
         }
-
-        return _values[target]!!
     }
 
     private fun reverseGraph(): MutableMap<String, MutableList<Node>> {
